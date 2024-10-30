@@ -1,3 +1,5 @@
 # Git ignore paths for PetProjekt1
 C:\Users\KrisMur\Desktop\PetProjekt1\Apartment_Prices_in_KR-PL-\clean_city_data
 C:\Users\KrisMur\Desktop\PetProjekt1\Apartment_Prices_in_KR-PL-\raw_city_data
+C:\Users\KrisMur\Desktop\PetProjekt1\Apartment_Prices_in_KR-PL-\clean_data
+clean_data/
