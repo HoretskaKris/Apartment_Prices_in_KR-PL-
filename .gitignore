@@ -1,0 +1,5 @@
+# Git ignore paths
+clean_data/
+raw_data/
+logs/
+
