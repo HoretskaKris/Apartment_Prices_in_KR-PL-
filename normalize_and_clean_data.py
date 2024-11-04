@@ -3,7 +3,6 @@ import os
 import logging
 from datetime import datetime
 from typing import List, Dict
-import numpy as np
 
 pd.set_option('future.no_silent_downcasting', True)
 
@@ -16,24 +15,37 @@ logging.basicConfig(
     encoding='utf-8'
 )
 
-def load_all_data(directory_path: str) -> pd.DataFrame:
-    '''Loading data from all files in the specified folder and combining them into one dataset'''
-    logging.info('Loading data from all files in folder %s', directory_path)
-    dataframes: List[pd.DataFrame] = []
+def load_data(file_path: str) -> pd.DataFrame:
+    '''Loading data from a specific file'''
+    logging.info('Loading data from file %s', file_path)
+    try:
+        df: pd.DataFrame = pd.read_csv(file_path)
+        logging.info('File %s successfully loaded', file_path)
+        return df
+    except Exception as e:
+        logging.error('Failed to load file %s: %s', file_path, e)
+        return pd.DataFrame()
 
-    for file in os.listdir(directory_path):
-        if file.endswith('.csv'):
-            file_path: str = os.path.join(directory_path, file)
-            try:
-                df: pd.DataFrame = pd.read_csv(file_path)
-                dataframes.append(df)
-                logging.info('File %s successfully loaded', file)
-            except Exception as e:
-                logging.error('Failed to load file %s: %s', file, e)
+def save_cleaned_data(df: pd.DataFrame, original_file_path: str, save_directory: str) -> None:
+    '''Save cleaned data preserving the original folder structure and file name, keeping only the newest version'''
+    logging.info('Saving cleaned data for %s', original_file_path)
+    relative_path = os.path.relpath(original_file_path, start=r'.\split_by_type_year_data')
 
-    combined_df: pd.DataFrame = pd.concat(dataframes, ignore_index=True)
-    logging.info('Total of %d rows loaded', len(combined_df))
-    return combined_df
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    base_name, extension = os.path.splitext(relative_path)
+    save_folder = os.path.join(save_directory, os.path.dirname(base_name))
+    save_path = os.path.join(save_folder, f"{os.path.basename(base_name)}_{timestamp}{extension}")
+
+    os.makedirs(save_folder, exist_ok=True)
+    for file in os.listdir(save_folder):
+        if file.startswith(os.path.basename(base_name)) and file.endswith(extension):
+            old_file_path = os.path.join(save_folder, file)
+            os.remove(old_file_path)
+            logging.info('Deleted old file: %s', old_file_path)
+
+    df.to_csv(save_path, index=False)
+    logging.info('Cleaned data saved at: %s', save_path)
+
 
 def remove_non_unique_ids(df: pd.DataFrame) -> pd.DataFrame:
     '''Removing non-unique IDs'''
@@ -160,30 +172,21 @@ def replace_ownership_value(df: pd.DataFrame) -> pd.DataFrame:
     df['ownership'] = df['ownership'].replace('udział', 'part ownership')
     return df
 
-def save_clean_data(df: pd.DataFrame, save_directory: str) -> None:
-    '''Saving cleaned data'''
-    logging.info('Saving cleaned data')
-    current_datetime: str = datetime.now().strftime('%Y%m%d_%H%M%S')
-    file_name: str = f"cleaned_data_{current_datetime}.csv"
-    save_path: str = os.path.join(save_directory, file_name)
-
-    df.to_csv(save_path, index=False)
-    logging.info('Cleaned data saved at: %s', save_path)
-
 def check_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     '''Checking remaining missing values in the data'''
     logging.info('Checking remaining missing values in the data')
     missing_summary: pd.DataFrame = df.isnull().sum().to_frame(name='Missing Values')
     missing_summary['Percentage'] = (missing_summary['Missing Values'] / len(df)) * 100
-    logging.info('Final report on missing values: %s', missing_summary)
+    logging.info('Report on missing values: %s', missing_summary)
     return df
 
-def main() -> None:
-    logging.info('-----Start-----')
-    directory_path: str = r'.\raw_data'
-    clean_folder: str = r'.\clean_data'
+def process_file(file_path: str, save_directory: str) -> bool:
+    '''Process individual file and save cleaned data'''
+    df = load_data(file_path)
+    if df.empty:
+        logging.warning('No data found in %s, skipping', file_path)
+        return False
 
-    df: pd.DataFrame = load_all_data(directory_path)
     remove_non_unique_ids(df)
     fill_condition(df)
     fill_missing_building_material(df)
@@ -196,7 +199,32 @@ def main() -> None:
     df = replace_yes_no(df)
     df = replace_ownership_value(df)
     check_missing_values(df)
-    save_clean_data(df, clean_folder)
+
+    save_cleaned_data(df, file_path, save_directory)
+    return True
+
+def main() -> None:
+    logging.info('-----Start-----')
+    base_directory: str = r'.\split_by_type_year_data'
+    clean_folder: str = r'.\clean_data'
+    
+    processed_files = []
+
+    for root, _, files in os.walk(base_directory):
+        for file in files:
+            if file.endswith('.csv'):
+                file_path = os.path.join(root, file)
+                result = process_file(file_path, clean_folder)
+                processed_files.append((file_path, result))
+
+    logging.info('----Processed info: ')
+    for file_path, result in processed_files:
+        
+        if result:
+            logging.info('Successfully processed: %s', file_path)
+        else:
+            logging.warning('Skipped: %s', file_path)
+
     logging.info('-----End-----')
 
 if __name__ == "__main__":
