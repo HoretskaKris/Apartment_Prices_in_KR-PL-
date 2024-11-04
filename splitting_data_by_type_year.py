@@ -1,9 +1,10 @@
-import os
-import pandas as pd
 import logging
-from typing import List, Dict
+import os
 import re
 from datetime import datetime
+from typing import Dict, List
+
+import pandas as pd
 
 log_directory: str = r'./logs'
 os.makedirs(log_directory, exist_ok=True)
@@ -13,7 +14,8 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     encoding='utf-8'
 )
- 
+
+
 def check_folder_exists(folder_path: str) -> None:
     '''Check if folder exists'''
     if not os.path.exists(folder_path):
@@ -24,7 +26,8 @@ def check_folder_exists(folder_path: str) -> None:
 def get_csv_files(folder_path: str) -> List[str]:
     '''Get list of CSV files in folder'''
     files = os.listdir(folder_path)
-    csv_files = [os.path.join(folder_path, file) for file in files if file.endswith('.csv')]
+    csv_files = [os.path.join(folder_path, file)
+                 for file in files if file.endswith('.csv')]
     return csv_files
 
 
@@ -39,7 +42,7 @@ def load_csv_files_by_year(file_paths: List[str]) -> Dict[str, pd.DataFrame]:
     '''Load CSV files by year'''
     data_by_year = {}
     year_pattern = re.compile(r'(\d{4})')
-    
+
     for file_path in file_paths:
         try:
             match = year_pattern.search(file_path)
@@ -48,13 +51,15 @@ def load_csv_files_by_year(file_paths: List[str]) -> Dict[str, pd.DataFrame]:
                 temp_df = pd.read_csv(file_path)
                 if year not in data_by_year:
                     data_by_year[year] = pd.DataFrame()
-                data_by_year[year] = pd.concat([data_by_year[year], temp_df], ignore_index=True)
+                data_by_year[year] = pd.concat(
+                    [data_by_year[year], temp_df], ignore_index=True)
                 logging.info(f'Successfully loaded file: {file_path}')
             else:
-                logging.warning(f'Could not determine year in file: {file_path}')
+                logging.warning(
+                    f'Could not determine year in file: {file_path}')
         except Exception as e:
             logging.error(f'Error loading file {file_path}: {e}')
-    
+
     return data_by_year
 
 
@@ -69,21 +74,24 @@ def create_folder(folder_path: str) -> None:
 
 
 def save_dataframes_by_year(data_by_year: Dict[str, pd.DataFrame], output_folder: str, category: str) -> None:
-    '''Save dataframes by year into corresponding subfolders''' 
+    '''Save dataframes by year into corresponding subfolders'''
     try:
         for year, df in data_by_year.items():
             year_folder = os.path.join(output_folder, f'{category}_{year}')
             create_folder(year_folder)
             current_datetime = datetime.now().strftime('%Y%m%d_%H%M%S')
-            file_path = os.path.join(year_folder, f'{category}_data_{year}_{current_datetime}.csv')
+            file_path = os.path.join(
+                year_folder, f'{category}_data_{year}_{current_datetime}.csv')
             # Check if any file exists in the folder and overwrite if necessary
             existing_files = os.listdir(year_folder)
             if existing_files:
                 for existing_file in existing_files:
                     os.remove(os.path.join(year_folder, existing_file))
-                logging.info(f'Existing files in {year_folder} have been removed')
+                logging.info(
+                    f'Existing files in {year_folder} have been removed')
             df.to_csv(file_path, index=False)
-            logging.info(f'{category} data for {year} successfully saved to {file_path}')
+            logging.info(
+                f'{category} data for {year} successfully saved to {file_path}')
     except Exception as e:
         logging.error(f'Error saving dataframes: {e}')
         raise
@@ -108,6 +116,7 @@ def main():
     save_dataframes_by_year(rent_data_by_year, output_folder, 'rent')
     save_dataframes_by_year(sale_data_by_year, output_folder, 'sale')
     logging.info('-----End-----')
+
 
 if __name__ == "__main__":
     main()
