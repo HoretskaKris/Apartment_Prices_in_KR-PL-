@@ -1,5 +1,5 @@
 # Git ignore paths
 clean_data/
 raw_data/
+split_by_type_year_data/
 logs/
-
