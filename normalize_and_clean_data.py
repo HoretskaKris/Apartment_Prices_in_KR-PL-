@@ -7,6 +7,9 @@ import pandas as pd
 
 pd.set_option('future.no_silent_downcasting', True)
 
+BASE_DIRECTORY: str = r'.\split_by_type_year_data'
+CLEAN_FOLDER: str = r'.\clean_data'
+
 log_directory: str = r'.\logs'
 os.makedirs(log_directory, exist_ok=True)
 logging.basicConfig(
@@ -234,16 +237,14 @@ def process_file(file_path: str, save_directory: str) -> bool:
 
 def main() -> None:
     logging.info('-----Start-----')
-    base_directory: str = r'.\split_by_type_year_data'
-    clean_folder: str = r'.\clean_data'
 
     processed_files = []
 
-    for root, _, files in os.walk(base_directory):
+    for root, _, files in os.walk(BASE_DIRECTORY):
         for file in files:
             if file.endswith('.csv'):
                 file_path = os.path.join(root, file)
-                result = process_file(file_path, clean_folder)
+                result = process_file(file_path, CLEAN_FOLDER)
                 processed_files.append((file_path, result))
 
     logging.info('----Processed info: ')
