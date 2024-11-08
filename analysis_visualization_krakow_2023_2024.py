@@ -2,7 +2,6 @@ import os
 import re
 
 import folium
-import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from folium.plugins import HeatMap
