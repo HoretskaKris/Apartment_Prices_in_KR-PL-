@@ -32,7 +32,10 @@ def load_data(file_path: str) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-def save_cleaned_data(df: pd.DataFrame, original_file_path: str, save_directory: str) -> None:
+def save_cleaned_data(
+        df: pd.DataFrame,
+        original_file_path: str,
+        save_directory: str) -> None:
     '''Save cleaned data preserving the original folder structure and file name, keeping only the newest version'''
     logging.info('Saving cleaned data for %s', original_file_path)
     relative_path = os.path.relpath(
@@ -46,7 +49,8 @@ def save_cleaned_data(df: pd.DataFrame, original_file_path: str, save_directory:
 
     os.makedirs(save_folder, exist_ok=True)
     for file in os.listdir(save_folder):
-        if file.startswith(os.path.basename(base_name)) and file.endswith(extension):
+        if file.startswith(os.path.basename(base_name)
+                           ) and file.endswith(extension):
             old_file_path = os.path.join(save_folder, file)
             os.remove(old_file_path)
             logging.info('Deleted old file: %s', old_file_path)
@@ -65,7 +69,8 @@ def remove_non_unique_ids(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def get_price_stats_for_city(df: pd.DataFrame, city: str) -> Dict[str, Dict[str, float]]:
+def get_price_stats_for_city(
+        df: pd.DataFrame, city: str) -> Dict[str, Dict[str, float]]:
     '''Getting minimum and maximum prices for 'premium' and 'low' categories for the specified city'''
     city_data = df[df['city'] == city]
     stats = {}
@@ -160,8 +165,14 @@ def fill_missing_distances(df: pd.DataFrame) -> pd.DataFrame:
     '''Filling missing values in distance columns to various facilities'''
     logging.info(
         'Filling missing values in distance columns to various facilities')
-    distance_columns: List[str] = ['schoolDistance', 'clinicDistance', 'postOfficeDistance',
-                                   'kindergartenDistance', 'restaurantDistance', 'collegeDistance', 'pharmacyDistance']
+    distance_columns: List[str] = [
+        'schoolDistance',
+        'clinicDistance',
+        'postOfficeDistance',
+        'kindergartenDistance',
+        'restaurantDistance',
+        'collegeDistance',
+        'pharmacyDistance']
 
     for column in distance_columns:
         correlated_columns: List[str] = [col for col in distance_columns if col !=
@@ -178,10 +189,11 @@ def fill_missing_has_elevator(df: pd.DataFrame) -> pd.DataFrame:
     '''Filling missing values in the hasElevator column'''
     logging.info('Filling missing values in the hasElevator column')
     df['hasElevator'] = df.apply(
-        lambda row: 'yes' if pd.isna(row['hasElevator']) and row['floorCount'] > 5 else (
-            'no' if pd.isna(row['hasElevator']) else row['hasElevator']),
-        axis=1
-    )
+        lambda row: 'yes' if pd.isna(
+            row['hasElevator']) and row['floorCount'] > 5 else (
+            'no' if pd.isna(
+                row['hasElevator']) else row['hasElevator']),
+        axis=1)
     logging.info('Missing hasElevator values filled based on floorCount')
     return df
 
