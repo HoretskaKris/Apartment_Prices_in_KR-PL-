@@ -86,7 +86,8 @@ def create_folder(folder_path: str) -> bool:
         return False
 
 
-def save_dataframes_by_year(data_by_year: Dict[str, pd.DataFrame], output_folder: str, category: str) -> bool:
+def save_dataframes_by_year(
+        data_by_year: Dict[str, pd.DataFrame], output_folder: str, category: str) -> bool:
     '''Save dataframes by year into corresponding subfolders'''
     try:
         for year, df in data_by_year.items():

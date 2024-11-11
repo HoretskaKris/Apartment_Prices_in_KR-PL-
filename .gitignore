@@ -3,3 +3,5 @@ clean_data/
 raw_data/
 split_by_type_year_data/
 logs/
+__pycache__/
+config.py
